@@ -15,4 +15,4 @@ else:
     TRACKING_URI = f"file://{MLRUNS_DIR.as_posix()}"
 
 
-pytest_plugins = ["tests.fixtures.datapreprocessor_fixture"]
+pytest_plugins = ["tests.fixtures.datapreprocessor_fixture", "tests.fixtures.custom_model_fixture"]
