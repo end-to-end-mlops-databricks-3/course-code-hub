@@ -1,19 +1,25 @@
 # Databricks notebook source
-# MAGIC %pip install -e ..
+# install dependencies
+%pip install -e ..
+%pip install git+https://github.com/end-to-end-mlops-databricks-3/marvelous@0.1.0
 
 # COMMAND ----------
 
+#restart python
+%restart_python
+
+# COMMAND ----------
+
+# system path update, must be after %restart_python
+# caution! This is not a great approach
 from pathlib import Path
 import sys
 sys.path.append(str(Path.cwd().parent / 'src'))
 
 # COMMAND ----------
 
-# MAGIC %pip install git+https://github.com/end-to-end-mlops-databricks-3/marvelous@0.1.0
-
-# COMMAND ----------
-
-# MAGIC %restart_python
+# A better approach (this file must be present in a notebook folder, achieved via synchronization)
+%pip install house_price-1.0.1-py3-none-any.whl
 
 # COMMAND ----------
 
@@ -36,6 +42,9 @@ from mlflow.utils.environment import _mlflow_conda_env
 from databricks import feature_engineering
 from databricks.feature_engineering import FeatureFunction, FeatureLookup
 from pyspark.errors import AnalysisException
+import numpy as np
+from datetime import datetime
+import boto3
 
 
 # COMMAND ----------
@@ -60,10 +69,14 @@ test_set = spark.table(f"{config.catalog_name}.{config.schema_name}.test_set")
 # COMMAND ----------
 
 # create feature table with information about houses
-# Option 1: feature engineering client
-feature_table_name = f"{config.catalog_name}.{config.schema_name}.house_features"
+
+feature_table_name = f"{config.catalog_name}.{config.schema_name}.house_features_demo"
 lookup_features = ["OverallQual", "GrLivArea", "GarageCars"]
 
+
+# COMMAND ----------
+
+# Option 1: feature engineering client
 feature_table = fe.create_table(
    name=feature_table_name,
    primary_keys=["Id"],
@@ -79,7 +92,6 @@ fe.write_table(
    mode="merge",
 )
 
-
 # COMMAND ----------
 
 # create feature table with information about houses
@@ -90,7 +102,10 @@ spark.sql(f"""
           (Id STRING NOT NULL, OverallQual INT, GrLivArea INT, GarageCars INT);
           """)
 # primary key on Databricks is not enforced!
-spark.sql(f"ALTER TABLE {feature_table_name} ADD CONSTRAINT house_pk PRIMARY KEY(Id);")
+try:
+    spark.sql(f"ALTER TABLE {feature_table_name} ADD CONSTRAINT house_pk_demo PRIMARY KEY(Id);")
+except AnalysisException:
+    pass
 spark.sql(f"ALTER TABLE {feature_table_name} SET TBLPROPERTIES (delta.enableChangeDataFeed = true);")
 spark.sql(f"""
           INSERT INTO {feature_table_name}
@@ -115,9 +130,12 @@ spark.sql(f"""
 # this is only supported from runtime 17
 # advised to use only for simple calculations
 
-# Option 1: with Python
+function_name = f"{config.catalog_name}.{config.schema_name}.calculate_house_age_demo"
 
-function_name = f"{config.catalog_name}.{config.schema_name}.calculate_house_age"
+# COMMAND ----------
+
+
+# Option 1: with Python
 spark.sql(f"""
         CREATE OR REPLACE FUNCTION {function_name}(year_built BIGINT)
         RETURNS INT
@@ -250,6 +268,47 @@ predictions.select("prediction").show(5)
 
 # COMMAND ----------
 
+overallqual_function = f"{config.catalog_name}.{config.schema_name}.replace_overallqual_missing"
+spark.sql(f"""
+        CREATE OR REPLACE FUNCTION {overallqual_function}(OverallQual INT)
+        RETURNS INT
+        LANGUAGE PYTHON AS
+        $$
+        if OverallQual is None:
+            return 5
+        else:
+            return OverallQual
+        $$
+        """)
+
+grlivarea_function = f"{config.catalog_name}.{config.schema_name}.replace_grlivarea_missing"
+spark.sql(f"""
+        CREATE OR REPLACE FUNCTION {grlivarea_function}(GrLivArea INT)
+        RETURNS INT
+        LANGUAGE PYTHON AS
+        $$
+        if GrLivArea is None:
+            return 1000
+        else:
+            return GrLivArea
+        $$
+        """)
+
+garagecars_function = f"{config.catalog_name}.{config.schema_name}.replace_garagecars_missing"
+spark.sql(f"""
+        CREATE OR REPLACE FUNCTION {garagecars_function}(GarageCars INT)
+        RETURNS INT
+        LANGUAGE PYTHON AS
+        $$
+        if GarageCars is None:
+            return 2
+        else:
+            return GarageCars
+        $$
+        """)
+
+# COMMAND ----------
+
 # what if we want to replace with a default value if entry is not found
 # what if we want to look up value in another table? the logics get complex
 # problems that arize: functions/ lookups always get executed (if statememt is not possible)
@@ -270,10 +329,25 @@ training_set = fe.create_training_set(
             table_name=feature_table_name,
             feature_names=["OverallQual", "GrLivArea", "GarageCars"],
             lookup_key="Id",
+            rename_outputs={"OverallQual": "lookup_OverallQual",
+                            "GrLivArea": "lookup_GrLivArea",
+                            "GarageCars": "lookup_GarageCars"}
                 ),
-        FeatureFunction(),
-        FeatureFunction(),
-        FeatureFunction(),
+        FeatureFunction(
+            udf_name=overallqual_function,
+            output_name="OverallQual",
+            input_bindings={"OverallQual": "lookup_OverallQual"},
+            ),
+        FeatureFunction(
+            udf_name=grlivarea_function,
+            output_name="GrLivArea",
+            input_bindings={"GrLivArea": "lookup_GrLivArea"},
+        ),
+        FeatureFunction(
+            udf_name=garagecars_function,
+            output_name="GarageCars",
+            input_bindings={"GarageCars": "lookup_GarageCars"},
+        ),
         FeatureFunction(
             udf_name=function_name,
             output_name="house_age",
@@ -285,11 +359,77 @@ training_set = fe.create_training_set(
 
 # COMMAND ----------
 
+# Train & register a model
+training_df = training_set.load_df().toPandas()
+X_train = training_df[config.num_features + config.cat_features + ["house_age"]]
+y_train = training_df[config.target]
+
+#pipeline
+pipeline = Pipeline(
+        steps=[("preprocessor", ColumnTransformer(
+            transformers=[("cat", OneHotEncoder(handle_unknown="ignore"),
+                           config.cat_features)],
+            remainder="passthrough")
+            ),
+               ("regressor", LGBMRegressor(**config.parameters))]
+        )
+
+pipeline.fit(X_train, y_train)
+
+# COMMAND ----------
+
+mlflow.set_experiment("/Shared/demo-model-fe")
+with mlflow.start_run(run_name="demo-run-model-fe",
+                      tags={"git_sha": "1234567890abcd",
+                            "branch": "week2"},
+                            description="demo run for FE model logging") as run:
+    # Log parameters and metrics
+    run_id = run.info.run_id
+    mlflow.log_param("model_type", "LightGBM with preprocessing")
+    mlflow.log_params(config.parameters)
+
+    # Log the model
+    signature = infer_signature(model_input=X_train, model_output=pipeline.predict(X_train))
+    fe.log_model(
+                model=pipeline,
+                flavor=mlflow.sklearn,
+                artifact_path="lightgbm-pipeline-model-fe",
+                training_set=training_set,
+                signature=signature,
+            )
+model_name = f"{config.catalog_name}.{config.schema_name}.model_fe_demo"
+model_version = mlflow.register_model(
+    model_uri=f'runs:/{run_id}/lightgbm-pipeline-model-fe',
+    name=model_name,
+    tags={"git_sha": "1234567890abcd"})
+
+# COMMAND ----------
+
+from pyspark.sql.functions import col
+
+features = [f for f in ["Id"] + config.num_features + config.cat_features if f not in lookup_features]
+test_set_with_new_id = test_set.select(*features).withColumn(
+    "Id",
+    (col("Id").cast("long") + 1000000).cast("string")
+)
+
+predictions = fe.score_batch(
+    model_uri=f"models:/{model_name}/{model_version.version}",
+    df=test_set_with_new_id 
+)
+
+# COMMAND ----------
+
+# make predictions for a non-existing entry -> no error!
+predictions.select("prediction").show(5)
+
+# COMMAND ----------
+
 import boto3
 
 region_name = "eu-west-1"
-aws_access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
-aws_secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
+aws_access_key_id = os.environ["aws_access_key_id"]
+aws_secret_access_key = os.environ["aws_secret_access_key"]
 
 client = boto3.client(
     'dynamodb',
@@ -396,6 +536,7 @@ for batch in chunks(items, 25):
 
 # COMMAND ----------
 
+
 class HousePriceModelWrapper(mlflow.pyfunc.PythonModel):
     """Wrapper class for machine learning models to be used with MLflow.
 
@@ -408,10 +549,6 @@ class HousePriceModelWrapper(mlflow.pyfunc.PythonModel):
         :param model: The underlying machine learning model.
         """
         self.model = model
-        self.client = boto3.client('dynamodb',
-                                   aws_access_key_id=os.environ["aws_access_key_id"],
-                                   aws_secret_access_key=os.environ["aws_secret_access_key"],
-                                   region_name=os.environ["region_name"])
 
     def predict(
         self, context: mlflow.pyfunc.PythonModelContext, model_input: pd.DataFrame | np.ndarray
@@ -422,20 +559,67 @@ class HousePriceModelWrapper(mlflow.pyfunc.PythonModel):
         :param model_input: Input data for making predictions.
         :return: A dictionary containing the adjusted prediction.
         """
-        lookup_id = model_input["Id"]
-        output = client.get_item(
-            TableName='HouseFeatures',
-            Key={'Id': {'S': lookup_id}})
+        client = boto3.client('dynamodb',
+                                   aws_access_key_id=os.environ["aws_access_key_id"],
+                                   aws_secret_access_key=os.environ["aws_secret_access_key"],
+                                   region_name=os.environ["region_name"])
         
-        df = model_input.drop(["Id"])
-        df["GarageCars"] = output["GarageCars"]["N"] # -> outputs a number
-        df["GrLivArea"] = output["GrLivArea"]["N"] # -> outputs a number
-        df["OverallQual"] = output["OverallQual"]["N"] # -> outputs a number
-        predictions = self.model.predict(df)
+        parsed = []
+        for lookup_id in model_input["Id"]:
+            raw_item = client.get_item(
+                TableName='HouseFeatures',
+                Key={'Id': {'S': lookup_id}})["Item"]     
+            parsed_dict = {key: int(value['N']) if 'N' in value else value['S']
+                      for key, value in raw_item.items()}
+            parsed.append(parsed_dict)
+        lookup_df=pd.DataFrame(parsed)
+        merged_df = model_input.merge(lookup_df, on="Id", how="left").drop("Id", axis=1)
         
-        adjusted_predictions = adjust_predictions(predictions)
-        logger.info(f"adjusted_predictions: {adjusted_predictions}")
-        return adjusted_predictions
+        merged_df["GarageCars"] = merged_df["GarageCars"].fillna(2)
+        merged_df["GrLivArea"] = merged_df["GrLivArea"].fillna(1000)
+        merged_df["OverallQual"] = merged_df["OverallQual"].fillna(5)
+        merged_df["house_age"] = datetime.now().year - merged_df["YearBuilt"]
+        predictions = self.model.predict(merged_df)
+
+        return [int(x) for x in predictions]
 
 # COMMAND ----------
 
+custom_model = HousePriceModelWrapper(pipeline)
+
+# COMMAND ----------
+
+features = [f for f in ["Id"] + config.num_features + config.cat_features if f not in lookup_features]
+data = test_set.select(*features).toPandas()
+data
+
+# COMMAND ----------
+
+custom_model.predict(context=None, model_input=data)
+
+# COMMAND ----------
+
+#log model
+mlflow.set_experiment("/Shared/demo-model-fe-pyfunc")
+with mlflow.start_run(run_name="demo-run-model-fe-pyfunc",
+                      tags={"git_sha": "1234567890abcd",
+                            "branch": "week2"},
+                            description="demo run for FE model logging") as run:
+    # Log parameters and metrics
+    run_id = run.info.run_id
+    mlflow.log_param("model_type", "LightGBM with preprocessing")
+    mlflow.log_params(config.parameters)
+
+    # Log the model
+    signature = infer_signature(model_input=data, model_output=custom_model.predict(context=None, model_input=data))
+    mlflow.pyfunc.log_model(
+                python_model=custom_model,
+                artifact_path="lightgbm-pipeline-model-fe",
+                signature=signature,
+            )
+    
+
+# COMMAND ----------
+
+# predict
+mlflow.models.predict(f"runs:/{run_id}/lightgbm-pipeline-model-fe", data[0:1])
