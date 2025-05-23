@@ -21,7 +21,7 @@ from sklearn.model_selection import train_test_split
 # COMMAND ----------
 
 # Load configuration
-with open("../project_config.yml", "r") as file:
+with open("../project_config.yml") as file:
     config = yaml.safe_load(file)
 
 catalog_name = config["catalog_name"]
@@ -107,12 +107,8 @@ train_set_with_timestamp.write.mode("append").saveAsTable(f"{catalog_name}.{sche
 
 test_set_with_timestamp.write.mode("append").saveAsTable(f"{catalog_name}.{schema_name}.test_set")
 
-spark.sql(
-    f"ALTER TABLE {catalog_name}.{schema_name}.train_set " "SET TBLPROPERTIES (delta.enableChangeDataFeed = true);"
-)
+spark.sql(f"ALTER TABLE {catalog_name}.{schema_name}.train_set SET TBLPROPERTIES (delta.enableChangeDataFeed = true);")
 
-spark.sql(
-    f"ALTER TABLE {catalog_name}.{schema_name}.test_set " "SET TBLPROPERTIES (delta.enableChangeDataFeed = true);"
-)
+spark.sql(f"ALTER TABLE {catalog_name}.{schema_name}.test_set SET TBLPROPERTIES (delta.enableChangeDataFeed = true);")
 
 # COMMAND ----------

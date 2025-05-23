@@ -8,7 +8,6 @@
 # COMMAND ----------
 
 # Configure tracking uri
-import mlflow
 from loguru import logger
 from pyspark.sql import SparkSession
 
@@ -78,11 +77,13 @@ X_test = test_set.drop("OverallQual", "GrLivArea", "GarageCars", config.target)
 
 from pyspark.sql.functions import col
 
-X_test = X_test.withColumn("LotArea", col("LotArea").cast("int")) \
-       .withColumn("OverallCond", col("OverallCond").cast("int")) \
-       .withColumn("YearBuilt", col("YearBuilt").cast("int")) \
-       .withColumn("YearRemodAdd", col("YearRemodAdd").cast("int")) \
-       .withColumn("TotalBsmtSF", col("TotalBsmtSF").cast("int"))
+X_test = (
+    X_test.withColumn("LotArea", col("LotArea").cast("int"))
+    .withColumn("OverallCond", col("OverallCond").cast("int"))
+    .withColumn("YearBuilt", col("YearBuilt").cast("int"))
+    .withColumn("YearRemodAdd", col("YearRemodAdd").cast("int"))
+    .withColumn("TotalBsmtSF", col("TotalBsmtSF").cast("int"))
+)
 
 
 # COMMAND ----------
@@ -96,4 +97,3 @@ predictions = fe_model.load_latest_model_and_predict(X_test)
 logger.info(predictions)
 
 # COMMAND ----------
-

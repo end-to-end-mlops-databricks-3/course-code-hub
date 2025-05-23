@@ -1,15 +1,13 @@
-import argparse
-
 import yaml
 from loguru import logger
+from marvelous.logging import setup_logging
+from marvelous.timer import Timer
 from pyspark.sql import SparkSession
 
 from house_price.config import ProjectConfig
-from house_price.data_processor import DataProcessor, generate_synthetic_data
-from marvelous.logging import setup_logging
-from marvelous.timer import Timer
+from house_price.data_processor import DataProcessor
 
-config_path = f"../project_config.yml"
+config_path = "../project_config.yml"
 
 config = ProjectConfig.from_yaml(config_path=config_path, env="dev")
 

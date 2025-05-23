@@ -124,9 +124,9 @@ spark.sql(f"""
 # docs: https://docs.databricks.com/aws/en/sql/language-manual/sql-ref-syntax-ddl-create-sql-function
 
 # problems with feature functions:
-# functions are not versioned 
+# functions are not versioned
 # functions may behave differently depending on the runtime (and version of packages and python)
-# there is no way to enforce python version & package versions for the function 
+# there is no way to enforce python version & package versions for the function
 # this is only supported from runtime 17
 # advised to use only for simple calculations
 
@@ -223,7 +223,7 @@ with mlflow.start_run(run_name="demo-run-model-fe",
                 training_set=training_set,
                 signature=signature,
             )
-    
+
 
 # COMMAND ----------
 
@@ -258,7 +258,7 @@ test_set_with_new_id = test_set.select(*features).withColumn(
 
 predictions = fe.score_batch(
     model_uri=f"models:/{model_name}/{model_version.version}",
-    df=test_set_with_new_id 
+    df=test_set_with_new_id
 )
 
 # COMMAND ----------
@@ -415,7 +415,7 @@ test_set_with_new_id = test_set.select(*features).withColumn(
 
 predictions = fe.score_batch(
     model_uri=f"models:/{model_name}/{model_version.version}",
-    df=test_set_with_new_id 
+    df=test_set_with_new_id
 )
 
 # COMMAND ----------
@@ -563,18 +563,18 @@ class HousePriceModelWrapper(mlflow.pyfunc.PythonModel):
                                    aws_access_key_id=os.environ["aws_access_key_id"],
                                    aws_secret_access_key=os.environ["aws_secret_access_key"],
                                    region_name=os.environ["region_name"])
-        
+
         parsed = []
         for lookup_id in model_input["Id"]:
             raw_item = client.get_item(
                 TableName='HouseFeatures',
-                Key={'Id': {'S': lookup_id}})["Item"]     
+                Key={'Id': {'S': lookup_id}})["Item"]
             parsed_dict = {key: int(value['N']) if 'N' in value else value['S']
                       for key, value in raw_item.items()}
             parsed.append(parsed_dict)
         lookup_df=pd.DataFrame(parsed)
         merged_df = model_input.merge(lookup_df, on="Id", how="left").drop("Id", axis=1)
-        
+
         merged_df["GarageCars"] = merged_df["GarageCars"].fillna(2)
         merged_df["GrLivArea"] = merged_df["GrLivArea"].fillna(1000)
         merged_df["OverallQual"] = merged_df["OverallQual"].fillna(5)
@@ -617,7 +617,7 @@ with mlflow.start_run(run_name="demo-run-model-fe-pyfunc",
                 artifact_path="lightgbm-pipeline-model-fe",
                 signature=signature,
             )
-    
+
 
 # COMMAND ----------
 

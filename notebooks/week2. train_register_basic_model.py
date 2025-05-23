@@ -1,13 +1,12 @@
 # Databricks notebook source
 
 import mlflow
+from dotenv import load_dotenv
+from marvelous.common import is_databricks
 from pyspark.sql import SparkSession
 
 from house_price.config import ProjectConfig, Tags
 from house_price.models.basic_model import BasicModel
-
-from dotenv import load_dotenv
-from marvelous.common import is_databricks
 
 # COMMAND ----------
 # If you have DEFAULT profile and are logged in with DEFAULT profile,

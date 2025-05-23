@@ -3,10 +3,9 @@
 import mlflow
 from pyspark.sql import SparkSession
 
+from house_price import __version__ as house_price_v
 from house_price.config import ProjectConfig, Tags
 from house_price.models.custom_model import CustomModel
-
-from house_price import __version__ as house_price_v
 
 # COMMAND ----------
 # Default profile:
@@ -20,8 +19,7 @@ tags = Tags(**{"git_sha": "abcd12345", "branch": "week2"})
 # COMMAND ----------
 # Initialize model with the config path
 custom_model = CustomModel(
-    config=config, tags=tags, spark=spark,
-    code_paths=[f"../dist/house_price-{house_price_v}-py3-none-any.whl"]
+    config=config, tags=tags, spark=spark, code_paths=[f"../dist/house_price-{house_price_v}-py3-none-any.whl"]
 )
 
 # COMMAND ----------
