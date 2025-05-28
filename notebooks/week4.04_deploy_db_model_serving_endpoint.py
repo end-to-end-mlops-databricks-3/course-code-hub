@@ -51,7 +51,7 @@ entity_version = '3' # registered model version
 served_entities = [
     ServedEntityInput(
         entity_name=model_name,
-        scale_to_zero_enabled="True",
+        scale_to_zero_enabled=True,
         workload_size="Small",
         entity_version=entity_version,
         environment_vars={

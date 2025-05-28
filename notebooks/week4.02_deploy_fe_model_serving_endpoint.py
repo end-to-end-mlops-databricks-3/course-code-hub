@@ -1,5 +1,5 @@
 # Databricks notebook source
-# MAGIC %pip install house_price-0.0.1-py3-none-any.whl
+# MAGIC %pip install house_price-1.0.1-py3-none-any.whl
 
 # COMMAND ----------
 # MAGIC %restart_python
