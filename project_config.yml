@@ -1,12 +1,16 @@
 prd:
   catalog_name: mlops_prd
   schema_name: house_prices
+  pipeline_id: c11adc56-3c89-4e19-9c8f-f1985bff4412 
 acc:
   catalog_name: mlops_acc
   schema_name: house_prices
+  pipeline_id: c11adc56-3c89-4e19-9c8f-f1985bff4412 
 dev:
   catalog_name: mlops_dev
   schema_name: house_prices
+  pipeline_id: c11adc56-3c89-4e19-9c8f-f1985bff4412 
+
 
 experiment_name_basic: /Shared/house-prices-basic
 experiment_name_custom: /Shared/house-prices-custom

@@ -6,7 +6,7 @@ from pyspark.dbutils import DBUtils
 from pyspark.sql import SparkSession
 
 from house_price.config import ProjectConfig, Tags
-from house_price.models.custom_model import CustomModel
+from house_price.models.feature_lookup_model import FeatureLookUpModel
 
 # Configure tracking uri
 mlflow.set_tracking_uri("databricks")
@@ -65,20 +65,45 @@ tags_dict = {"git_sha": args.git_sha, "branch": args.branch, "job_run_id": args.
 tags = Tags(**tags_dict)
 
 # Initialize model
-custom_model = CustomModel(
-    config=config, tags=tags, spark=spark, code_paths=["../dist/house_price-1.0.1-py3-none-any.whl"]
-)
+fe_model = FeatureLookUpModel(config=config, tags=tags, spark=spark)
 logger.info("Model initialized.")
 
-# Load data and prepare features
-custom_model.load_data()
-custom_model.prepare_features()
-logger.info("Loaded data, prepared features.")
+# Create feature table
+# fe_model.create_feature_table()
 
-# Train + log the model (runs everything including MLflow logging)
-custom_model.train()
-custom_model.log_model()
+fe_model.update_feature_table()
+logger.info("Feature table updated.")
+
+# Define house age feature function
+# fe_model.define_feature_function()
+
+# Load data
+fe_model.load_data()
+logger.info("Data loaded.")
+
+# Perform feature engineering
+fe_model.feature_engineering()
+
+# Train the model
+fe_model.train()
 logger.info("Model training completed.")
 
-custom_model.register_model()
-logger.info("Registered model")
+# Evaluate model
+# Load test set from Delta table
+spark = SparkSession.builder.getOrCreate()
+test_set = spark.table(f"{config.catalog_name}.{config.schema_name}.test_set").limit(100)
+# Drop feature lookup columns and target
+test_set = test_set.drop("OverallQual", "GrLivArea", "GarageCars")
+
+model_improved = fe_model.model_improved(test_set=test_set)
+logger.info("Model evaluation completed, model improved: ", model_improved)
+
+if model_improved:
+    # Register the model
+    latest_version = fe_model.register_model()
+    logger.info("New model registered with version:", latest_version)
+    dbutils.jobs.taskValues.set(key="model_version", value=latest_version)
+    dbutils.jobs.taskValues.set(key="model_updated", value=1)
+
+else:
+    dbutils.jobs.taskValues.set(key="model_updated", value=0)
