@@ -38,11 +38,11 @@ logger.info("Loaded config file.")
 
 catalog_name = config.catalog_name
 schema_name = config.schema_name
-endpoint_name = "house-prices-model-serving-fe-{args.env}"
+endpoint_name = f"house-prices-model-serving-fe-{args.env}"
 
 # Initialize Feature Lookup Serving Manager
 feature_model_server = FeatureLookupServing(
-    model_name="house_prices_model_fe",
+    model_name=f"{catalog_name}.{schema_name}.house_prices_model_fe",
     endpoint_name=endpoint_name,
     feature_table_name=f"{catalog_name}.{schema_name}.house_features",
 )
