@@ -22,8 +22,7 @@ class ProjectConfig(BaseModel):
     experiment_name_basic: str | None
     experiment_name_custom: str | None
     experiment_name_fe: str | None
-    pipeline_id: str
-
+    pipeline_id: str | None
 
     @classmethod
     def from_yaml(cls, config_path: str, env: str = "dev") -> "ProjectConfig":
@@ -42,9 +41,7 @@ class ProjectConfig(BaseModel):
             config_dict["schema_name"] = config_dict[env]["schema_name"]
             config_dict["pipeline_id"] = config_dict[env]["pipeline_id"]
 
-            return cls(
-                **{k: v for k, v in config_dict.items() if k in cls.model_fields}
-            )
+            return cls(**config_dict)
 
 
 class Tags(BaseModel):
