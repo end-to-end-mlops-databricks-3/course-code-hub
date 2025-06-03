@@ -85,6 +85,7 @@ jobs:
             repo_name="${full_repo##*/}"
             org_name="${full_repo%%/*}"
             databricks bundle deploy --var="git_sha=${{ github.sha }}" --var="repo=${repo_name}" --var="org=${org_name}"
-            job_id=$(databricks jobs list --name test_${repo_name} --output JSON | jq -r '.[0].job_id')
+            job_id=$(databricks jobs list --name test_${repo_name}-workflow --output JSON | jq -r '.[0].job_id')
             echo "Databricks job ID: $job_id"
             databricks jobs run-now "$job_id"
+            # databricks bundle run is not a great idea: will keep github runner busy

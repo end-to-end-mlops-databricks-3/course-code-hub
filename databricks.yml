@@ -55,7 +55,7 @@ resources:
             autoscale:
               min_workers: 1
               max_workers: 1
-            spark_env_vars: 
+            spark_env_vars:
               "PRIVATE_KEY": "{{secrets/mlops_course/github_app_pk}}"
 
       tasks:
@@ -63,7 +63,7 @@ resources:
           job_cluster_key: "house-price-cluster"
           spark_python_task:
             python_file: "scripts/01.process_data.py"
-            parameters: 
+            parameters:
               - "data_ingestion"
               - "--root_path"
               - "${workspace.root_path}"
@@ -80,7 +80,7 @@ resources:
             - task_key: "preprocessing"
           spark_python_task:
             python_file: "scripts/02.train_register_fe_model.py"
-            parameters: 
+            parameters:
               - "model_train_register"
               - "--root_path"
               - "${workspace.root_path}"

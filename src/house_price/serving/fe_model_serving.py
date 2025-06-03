@@ -4,17 +4,13 @@ import time
 
 import mlflow
 from databricks.sdk import WorkspaceClient
+from databricks.sdk.service import catalog
 from databricks.sdk.service.catalog import (
     OnlineTableSpec,
     OnlineTableSpecTriggeredSchedulingPolicy,
 )
 from databricks.sdk.service.serving import EndpointCoreConfigInput, ServedEntityInput
 from loguru import logger
-from databricks.sdk import WorkspaceClient
-from databricks.sdk.service.catalog import OnlineTable, OnlineTableSpec
-from databricks.sdk.service import catalog
-
-from house_price.config import ProjectConfig
 
 
 class FeatureLookupServing:
@@ -49,8 +45,7 @@ class FeatureLookupServing:
             existing_table = self.workspace.online_tables.get(self.online_table_name)
             logger.info("Online table already exists. Inititating table update.")
             pipeline_id = existing_table.spec.pipeline_id
-            update_response = self.workspace.pipelines.start_update(
-                pipeline_id=pipeline_id, full_refresh=False)
+            update_response = self.workspace.pipelines.start_update(pipeline_id=pipeline_id, full_refresh=False)
             while True:
                 update_info = self.workspace.pipelines.get_update(
                     pipeline_id=pipeline_id, update_id=update_response.update_id
@@ -79,11 +74,7 @@ class FeatureLookupServing:
             logger.info("Online does not exists. Inititating table creation.")
 
     def deploy_or_update_serving_endpoint(
-        self,
-        version: str = "latest",
-        workload_size: str = "Small",
-        scale_to_zero: bool = True,
-        wait: bool = False
+        self, version: str = "latest", workload_size: str = "Small", scale_to_zero: bool = True, wait: bool = False
     ) -> None:
         """Deploy or update the model serving endpoint in Databricks.
 
@@ -107,11 +98,11 @@ class FeatureLookupServing:
         if not endpoint_exists:
             if wait:
                 self.workspace.serving_endpoints.create_and_wait(
-                name=self.endpoint_name,
-                config=EndpointCoreConfigInput(
-                    served_entities=served_entities,
-                ),
-            )
+                    name=self.endpoint_name,
+                    config=EndpointCoreConfigInput(
+                        served_entities=served_entities,
+                    ),
+                )
             else:
                 self.workspace.serving_endpoints.create(
                     name=self.endpoint_name,
@@ -129,4 +120,4 @@ class FeatureLookupServing:
                 self.workspace.serving_endpoints.update_config(
                     name=self.endpoint_name,
                     served_entities=served_entities,
-                ) 
+                )
