@@ -1,6 +1,6 @@
 bundle:
   name: course-code-hub-workflow
-  
+
 artifacts:
   default:
     type: whl
@@ -54,7 +54,7 @@ resources:
               - ${bundle.target}
               - "--is_test"
               - ${var.is_test}
-              
+
           libraries:
            - whl: ./dist/*.whl
         - task_key: "train_model"
@@ -126,4 +126,3 @@ targets:
     variables:
       schedule_pause_status: UNPAUSED
       is_test: False
-

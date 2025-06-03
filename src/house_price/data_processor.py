@@ -1,9 +1,10 @@
 """Data preprocessing module."""
 
 import datetime
+import time
+
 import numpy as np
 import pandas as pd
-import time
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import current_timestamp, to_utc_timestamp
 from sklearn.model_selection import train_test_split
@@ -112,7 +113,6 @@ class DataProcessor:
         )
 
 
-
 def generate_synthetic_data(df: pd.DataFrame, drift: bool = False, num_rows: int = 500) -> pd.DataFrame:
     """Generate synthetic data matching input DataFrame distributions with optional drift.
 
@@ -194,8 +194,6 @@ def generate_synthetic_data(df: pd.DataFrame, drift: bool = False, num_rows: int
     return synthetic_data
 
 
-
 def generate_test_data(df: pd.DataFrame, drift: bool = False, num_rows: int = 100) -> pd.DataFrame:
-    """Generate test data matching input DataFrame distributions with optional drift.
-    """
+    """Generate test data matching input DataFrame distributions with optional drift."""
     return generate_synthetic_data(df, drift, num_rows)
