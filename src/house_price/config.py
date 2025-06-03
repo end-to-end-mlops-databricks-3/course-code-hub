@@ -22,7 +22,6 @@ class ProjectConfig(BaseModel):
     experiment_name_basic: str | None
     experiment_name_custom: str | None
     experiment_name_fe: str | None
-    pipeline_id: str | None
 
     @classmethod
     def from_yaml(cls, config_path: str, env: str = "dev") -> "ProjectConfig":
@@ -39,7 +38,6 @@ class ProjectConfig(BaseModel):
             config_dict = yaml.safe_load(f)
             config_dict["catalog_name"] = config_dict[env]["catalog_name"]
             config_dict["schema_name"] = config_dict[env]["schema_name"]
-            config_dict["pipeline_id"] = config_dict[env]["pipeline_id"]
 
             return cls(**config_dict)
 
