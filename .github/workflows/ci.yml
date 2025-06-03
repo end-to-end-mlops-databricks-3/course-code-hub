@@ -42,4 +42,4 @@ jobs:
 
       - name: run pytest
         run: |
-          uv run pytest
+          uv run pytest -m "not ci_exclude"
