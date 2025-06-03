@@ -6,6 +6,7 @@ from pyspark.sql import SparkSession
 
 from house_price.config import ProjectConfig
 from house_price.serving.fe_model_serving import FeatureLookupServing
+from databricks.sdk import WorkspaceClient
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -56,13 +57,15 @@ feature_model_server = FeatureLookupServing(
     feature_table_name=f"{catalog_name}.{schema_name}.house_features",
 )
 
-# Create the online table for house features
-# feature_model_server.create_online_table()
-# logger.info("Created online table")
-if not is_test:
-    feature_model_server.update_online_table(config=config)
-    logger.info("Updated online table")
+# Create or update the online table for house features
+feature_model_server.create_or_update_online_table()
+logger.info("Created or updated online table.")
 
-    # Deploy the model serving endpoint with feature lookup
-    feature_model_server.deploy_or_update_serving_endpoint(version=model_version)
-    logger.info("Started deployment/update of the serving endpoint")
+# Deploy the model serving endpoint with feature lookup
+feature_model_server.deploy_or_update_serving_endpoint(version=model_version)
+logger.info("Started deployment/update of the serving endpoint.")
+
+# Delete endpoint if test
+if is_test:
+    workspace = WorkspaceClient()
+    workspace.serving_endpoints.delete(name=endpoint_name)

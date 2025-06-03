@@ -7,54 +7,14 @@ from pyspark.sql import SparkSession
 
 from house_price.config import ProjectConfig, Tags
 from house_price.models.feature_lookup_model import FeatureLookUpModel
+from marvelous.comon import create_parser
+
+args = create_parser()
 
 # Configure tracking uri
 mlflow.set_tracking_uri("databricks")
 mlflow.set_registry_uri("databricks-uc")
 
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    "--root_path",
-    action="store",
-    default=None,
-    type=str,
-    required=True,
-)
-
-parser.add_argument(
-    "--env",
-    action="store",
-    default=None,
-    type=str,
-    required=True,
-)
-
-parser.add_argument(
-    "--git_sha",
-    action="store",
-    default=None,
-    type=str,
-    required=True,
-)
-
-parser.add_argument(
-    "--job_run_id",
-    action="store",
-    default=None,
-    type=str,
-    required=True,
-)
-
-parser.add_argument(
-    "--branch",
-    action="store",
-    default=None,
-    type=str,
-    required=True,
-)
-
-
-args = parser.parse_args()
 root_path = args.root_path
 config_path = f"{root_path}/files/project_config.yml"
 

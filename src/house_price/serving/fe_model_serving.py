@@ -48,7 +48,7 @@ class FeatureLookupServing:
         try:
             existing_table = self.workspace.online_tables.get(self.online_table_name)
             logger.info("Online table already exists. Inititating table update.")
-            pipeline_id = existing_table.spec.pipeliine_id
+            pipeline_id = existing_table.spec.pipeline_id
             update_response = self.workspace.pipelines.start_update(
                 pipeline_id=pipeline_id, full_refresh=False)
             while True:

@@ -8,23 +8,23 @@
 # COMMAND ----------
 
 import hashlib
+import os
+import time
 
 import mlflow
+import requests
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.serving import (
     EndpointCoreConfigInput,
     ServedEntityInput,
 )
+from dotenv import load_dotenv
+from marvelous.common import is_databricks
 from mlflow.models import infer_signature
 from pyspark.sql import SparkSession
 
 from house_price.config import ProjectConfig, Tags
 from house_price.models.basic_model import BasicModel
-from marvelous.common import is_databricks
-from dotenv import load_dotenv
-import os
-import requests
-import time
 
 # COMMAND ----------
 
@@ -166,9 +166,7 @@ print(dataframe_records[0])
 # Call the endpoint with one sample record
 
 def call_endpoint(record):
-    """
-    Calls the model serving endpoint with a given input record.
-    """
+    """Calls the model serving endpoint with a given input record."""
     serving_endpoint = f"https://{os.environ['DBR_HOST']}/serving-endpoints/house-prices-ab-testing/invocations"
 
     response = requests.post(
