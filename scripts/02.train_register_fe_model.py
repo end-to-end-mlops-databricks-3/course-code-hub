@@ -7,13 +7,9 @@ from pyspark.sql import SparkSession
 
 from house_price.config import ProjectConfig, Tags
 from house_price.models.feature_lookup_model import FeatureLookUpModel
-from marvelous.comon import create_parser
+from marvelous.common import create_parser
 
 args = create_parser()
-
-# Configure tracking uri
-mlflow.set_tracking_uri("databricks")
-mlflow.set_registry_uri("databricks-uc")
 
 root_path = args.root_path
 config_path = f"{root_path}/files/project_config.yml"
@@ -57,6 +53,12 @@ test_set = test_set.drop("OverallQual", "GrLivArea", "GarageCars")
 
 model_improved = fe_model.model_improved(test_set=test_set)
 logger.info("Model evaluation completed, model improved: ", model_improved)
+
+is_test = args.is_test
+
+# when running test, always register and deploy
+if is_test:
+    model_improved = True
 
 if model_improved:
     # Register the model

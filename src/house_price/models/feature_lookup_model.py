@@ -281,8 +281,8 @@ class FeatureLookUpModel:
         logger.info(f"MAE for Latest Model: {mae_latest}")
 
         if mae_current < mae_latest:
-            logger.info("Current Model performs better. Registering new model.")
+            logger.info("Current Model performs better.")
             return True
         else:
-            logger.info("New Model performs worse. Keeping the old model.")
+            logger.info("New Model performs worse.")
             return False

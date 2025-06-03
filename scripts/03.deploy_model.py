@@ -7,33 +7,10 @@ from pyspark.sql import SparkSession
 from house_price.config import ProjectConfig
 from house_price.serving.fe_model_serving import FeatureLookupServing
 from databricks.sdk import WorkspaceClient
+from marvelous.common import create_parser
 
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    "--root_path",
-    action="store",
-    default=None,
-    type=str,
-    required=True,
-)
+args = create_parser()
 
-parser.add_argument(
-    "--env",
-    action="store",
-    default=None,
-    type=str,
-    required=True,
-)
-
-parser.add_argument(
-    "--is_test",
-    action="store",
-    default=False,
-    type=bool,
-    required=True,
-)
-
-args = parser.parse_args()
 root_path = args.root_path
 is_test = args.is_test
 config_path = f"{root_path}/files/project_config.yml"
@@ -69,3 +46,4 @@ logger.info("Started deployment/update of the serving endpoint.")
 if is_test:
     workspace = WorkspaceClient()
     workspace.serving_endpoints.delete(name=endpoint_name)
+    logger.info("Deleting serving endpoint.")

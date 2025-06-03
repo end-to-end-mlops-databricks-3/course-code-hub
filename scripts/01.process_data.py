@@ -4,7 +4,7 @@ from pyspark.sql import SparkSession
 
 from house_price.config import ProjectConfig
 from house_price.data_processor import DataProcessor, generate_synthetic_data, generate_test_data
-from marvelous.comon import create_parser
+from marvelous.common import create_parser
 
 args = create_parser()
 
