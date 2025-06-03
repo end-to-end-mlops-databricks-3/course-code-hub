@@ -63,7 +63,14 @@ resources:
           job_cluster_key: "house-price-cluster"
           spark_python_task:
             python_file: "scripts/01.process_data.py"
-            parameters: ["data_ingestion", "--root_path", "${workspace.root_path}", "--env", "${var.env}", "--is_test", "${var.is_test}"]
+            parameters: 
+              - "data_ingestion"
+              - "--root_path"
+              - "${workspace.root_path}"
+              - "--env"
+              - "${var.env}"
+              - "--is_test"
+              - "${var.is_test}"
           libraries:
            - whl: ./dist/*.whl
            - whl: /Volumes/mlops_prd/utils/package/marvelous-${var.marvelous_version}-py3-none-any.whl
@@ -73,7 +80,20 @@ resources:
             - task_key: "preprocessing"
           spark_python_task:
             python_file: "scripts/02.train_register_fe_model.py"
-            parameters: ["model_train_register", "--root_path", "${workspace.root_path}", "--env", "${var.env}", "--git_sha", "${var.git_sha}", "--job_run_id", "{{job.run_id}}", "--branch", "${var.branch}"]
+            parameters: 
+              - "model_train_register"
+              - "--root_path"
+              - "${workspace.root_path}"
+              - "--env"
+              - "${var.env}"
+              - "--git_sha"
+              - "${var.git_sha}"
+              - "--job_run_id"
+              - "{{job.run_id}}"
+              - "--branch"
+              - "${var.branch}"
+              - "--is_test"
+              - "${var.is_test}"
           libraries:
             - whl: ./dist/*.whl
             - whl: /Volumes/mlops_prd/utils/package/marvelous-${var.marvelous_version}-py3-none-any.whl
@@ -91,7 +111,14 @@ resources:
           job_cluster_key: "house-price-cluster"
           spark_python_task:
             python_file: "scripts/03.deploy_model.py"
-            parameters: ["deployment", "--root_path", "${workspace.root_path}", "--env", "${var.env}", "--is_test", "${var.is_test}"]
+            parameters:
+              - "deployment"
+              - "--root_path"
+              - "${workspace.root_path}"
+              - "--env"
+              - "${var.env}"
+              - "--is_test"
+              - "${var.is_test}"
           libraries:
             - whl: ./dist/*.whl
             - whl: /Volumes/mlops_prd/utils/package/marvelous-${var.marvelous_version}-py3-none-any.whl
@@ -109,7 +136,18 @@ resources:
           job_cluster_key: "house-price-cluster"
           spark_python_task:
             python_file: "scripts/04.post_commit_status.py"
-            parameters: ["post_commit_check", "--job_run_id", "{{job.run_id}}", "--job_id", "{{job.id}}", "--git_sha", "${var.git_sha}", "--repo", "${var.repo}", "--org", "${var.org}"]
+            parameters:
+              - "post_commit_check"
+              - "--job_run_id"
+              - "{{job.run_id}}"
+              - "--job_id"
+              - "{{job.id}}"
+              - "--git_sha"
+              - "${var.git_sha}"
+              - "--repo"
+              - "${var.repo}"
+              - "--org"
+              - "${var.org}"
           libraries:
             - whl: ./dist/*.whl
             - whl: /Volumes/mlops_prd/utils/package/marvelous-${var.marvelous_version}-py3-none-any.whl
