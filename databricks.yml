@@ -34,7 +34,7 @@ variables:
 
 resources:
   jobs:
-    house-price:
+    deployment:
       name: ${bundle.name}-workflow
       # email_notifications:
       #     on_failure:
