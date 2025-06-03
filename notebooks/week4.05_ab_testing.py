@@ -124,8 +124,8 @@ model_version = mlflow.register_model(
 """Model serving module."""
 
 workspace = WorkspaceClient()
-model_name=f"{catalog_name}.{schema_name}.house_prices_model_custom_db"
-endpoint_name="house-prices-custom-model-serving-db"
+model_name=f"{catalog_name}.{schema_name}.house_prices_model_pyfunc_ab_test"
+endpoint_name="house-prices-ab-testing"
 entity_version = model_version.version # registered model version
 
 # get environment variables
@@ -135,7 +135,7 @@ os.environ["DBR_HOST"] = spark.conf.get("spark.databricks.workspaceUrl")
 served_entities = [
     ServedEntityInput(
         entity_name=model_name,
-        scale_to_zero_enabled="True",
+        scale_to_zero_enabled=True,
         workload_size="Small",
         entity_version=entity_version,
     )
@@ -151,39 +151,11 @@ workspace.serving_endpoints.create(
 # COMMAND ----------
 
 # Create a sample request body
-required_columns = [
-    "LotFrontage",
-    "LotArea",
-    "OverallCond",
-    "YearBuilt",
-    "YearRemodAdd",
-    "MasVnrArea",
-    "TotalBsmtSF",
-    "MSZoning",
-    "Street",
-    "Alley",
-    "LotShape",
-    "LandContour",
-    "Neighborhood",
-    "Condition1",
-    "BldgType",
-    "HouseStyle",
-    "RoofStyle",
-    "Exterior1st",
-    "Exterior2nd",
-    "MasVnrType",
-    "Foundation",
-    "Heating",
-    "CentralAir",
-    "SaleType",
-    "SaleCondition",
-    "Id",
-]
 
 spark = SparkSession.builder.getOrCreate()
 
 train_set = spark.table(f"{catalog_name}.{schema_name}.train_set").toPandas()
-sampled_records = train_set[required_columns].sample(n=1000, replace=True).to_dict(orient="records")
+sampled_records = train_set[config.num_features + config.cat_features + ["Id"]].sample(n=1000, replace=True).to_dict(orient="records")
 dataframe_records = [[record] for record in sampled_records]
 
 print(train_set.dtypes)
@@ -193,29 +165,11 @@ print(dataframe_records[0])
 
 # Call the endpoint with one sample record
 
-"""
-Each dataframe record in the request body should be list of json with columns looking like:
-
-[{'LotFrontage': 78.0,
-  'LotArea': 9317,
-  'OverallQual': 6,
-  'OverallCond': 5,
-  'YearBuilt': 2006,
-  'Exterior1st': 'VinylSd',
-  'Exterior2nd': 'VinylSd',
-  'MasVnrType': 'None',
-  'Foundation': 'PConc',
-  'Heating': 'GasA',
-  'CentralAir': 'Y',
-  'SaleType': 'WD',
-  'SaleCondition': 'Normal'}]
-"""
-
 def call_endpoint(record):
     """
     Calls the model serving endpoint with a given input record.
     """
-    serving_endpoint = f"https://{os.environ['DBR_HOST']}/serving-endpoints/house-prices-custom-model-serving-db/invocations"
+    serving_endpoint = f"https://{os.environ['DBR_HOST']}/serving-endpoints/house-prices-ab-testing/invocations"
 
     response = requests.post(
         serving_endpoint,
