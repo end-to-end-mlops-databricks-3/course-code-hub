@@ -1,5 +1,5 @@
 bundle:
-  name: course-code-hub-workflow
+  name: course-code-hub
 
 artifacts:
   default:
@@ -11,6 +11,12 @@ variables:
   git_sha:
     description: git_sha
     default: abcd
+  repo:
+    description: repo name
+    default: repo
+  org:
+    description: GitHub organization
+    default: end-to-end-mlops-databricks-3
   branch:
     description: branch
     default: main
@@ -19,12 +25,20 @@ variables:
     default: PAUSED
   is_test:
     default: False
-
+  env:
+    description: environment
+    default: dev
+  marvelous_version:
+    description: version of Marvelous package
+    default: "0.1.1"
 
 resources:
   jobs:
     house-price:
-      name: house-price-workflow-test-demo
+      name: ${bundle.name}-workflow
+      # email_notifications:
+      #     on_failure:
+      #       - example@example.com
       schedule:
         quartz_cron_expression: "0 0 6 ? * MON"
         timezone_id: "Europe/Amsterdam"
@@ -41,22 +55,25 @@ resources:
             autoscale:
               min_workers: 1
               max_workers: 1
+            spark_env_vars: 
+              "PRIVATE_KEY": "{{secrets/mlops_course/github_app_pk}}"
 
       tasks:
         - task_key: "preprocessing"
           job_cluster_key: "house-price-cluster"
           spark_python_task:
             python_file: "scripts/01.process_data.py"
-            parameters:
+            parameters: 
+              - "data_ingestion"
               - "--root_path"
               - ${workspace.root_path}
               - "--env"
-              - ${bundle.target}
+              - ${var.env}
               - "--is_test"
               - ${var.is_test}
-
           libraries:
            - whl: ./dist/*.whl
+           - whl: /Volumes/mlops_prd/utils/package/marvelous-${var.marvelous_version}-py3-none-any.whl
         - task_key: "train_model"
           job_cluster_key: "house-price-cluster"
           depends_on:
@@ -64,18 +81,20 @@ resources:
           spark_python_task:
             python_file: "scripts/02.train_register_fe_model.py"
             parameters:
+              - "model_train_register"
               - "--root_path"
               - ${workspace.root_path}
               - "--env"
-              - ${bundle.target}
+              - ${var.env}
               - "--git_sha"
               - ${var.git_sha}
               - "--job_run_id"
-              - "{{job.id}}"
+              - "{{job.run_id}}"
               - "--branch"
               - ${var.branch}
           libraries:
             - whl: ./dist/*.whl
+            - whl: /Volumes/mlops_prd/utils/package/marvelous-${var.marvelous_version}-py3-none-any.whl
         - task_key: model_updated
           condition_task:
             op: "EQUAL_TO"
@@ -91,16 +110,49 @@ resources:
           spark_python_task:
             python_file: "scripts/03.deploy_model.py"
             parameters:
+              - "deployment"
               - "--root_path"
               - ${workspace.root_path}
               - "--env"
-              - ${bundle.target}
+              - ${var.env}
+              - "--is_test"
+              - ${var.is_test}
           libraries:
             - whl: ./dist/*.whl
+            - whl: /Volumes/mlops_prd/utils/package/marvelous-${var.marvelous_version}-py3-none-any.whl
+        - task_key: post_commit_status_required
+          condition_task:
+            op: "EQUAL_TO"
+            left: "${var.is_test}"
+            right: "True"
+          depends_on:
+            - task_key: "deploy_model"
+        - task_key: "post_commit_status"
+          depends_on:
+            - task_key: "post_commit_status_required"
+              outcome: "True"
+          job_cluster_key: "house-price-cluster"
+          spark_python_task:
+            python_file: "scripts/04.post_commit_status.py"
+            parameters:
+              - "post_commit_check"
+              - "--job_run_id"
+              - "{{job.run_id}}"
+              - "--job_id"
+              - "{{job.id}}"
+              - "--git_sha"
+              - ${var.git_sha}
+              - "--repo"
+              - ${var.repo}
+              - "--org"
+              - ${var.org}
+          libraries:
+            - whl: ./dist/*.whl
+            - whl: /Volumes/mlops_prd/utils/package/marvelous-${var.marvelous_version}-py3-none-any.whl
 
 targets:
   dev:
-    cluster_id: 0513-112814-kzixtb9s
+    cluster_id: 0514-140727-24llz5or #replace with your own!
     default: true
     mode: development
     workspace:
@@ -108,21 +160,44 @@ targets:
       root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.target}/${bundle.name}
     variables:
       schedule_pause_status: PAUSED
-      is_test: True
+      is_test: False
+      env: dev
+    artifacts:
+      default:
+        type: whl
+        build: uv build
+        path: .
+        dynamic_version: True
 
-  acc:
+  test:
+    presets:
+      name_prefix: 'test_'
     workspace:
       host: https://dbc-c2e8445d-159d.cloud.databricks.com
       root_path: /Shared/.bundle/${bundle.target}/${bundle.name}
     variables:
       schedule_pause_status: PAUSED
       is_test: True
+      env: dev
 
-
-  prd:
+  acc:
+    presets:
+      name_prefix: 'acc_'
     workspace:
       host: https://dbc-c2e8445d-159d.cloud.databricks.com
       root_path: /Shared/.bundle/${bundle.target}/${bundle.name}
     variables:
-      schedule_pause_status: UNPAUSED
+      schedule_pause_status: PAUSED
+      is_test: True
+      env: acc
+
+
+  prd:
+    mode: production
+    workspace:
+      host: https://dbc-c2e8445d-159d.cloud.databricks.com
+      root_path: /Shared/.bundle/${bundle.target}/${bundle.name}
+    variables:
+      schedule_pause_status: PAUSED # normally UNPAUSED
       is_test: False
+      env: prd

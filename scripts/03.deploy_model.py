@@ -24,8 +24,17 @@ parser.add_argument(
     required=True,
 )
 
+parser.add_argument(
+    "--is_test",
+    action="store",
+    default=False,
+    type=bool,
+    required=True,
+)
+
 args = parser.parse_args()
 root_path = args.root_path
+is_test = args.is_test
 config_path = f"{root_path}/files/project_config.yml"
 
 spark = SparkSession.builder.getOrCreate()
@@ -50,10 +59,10 @@ feature_model_server = FeatureLookupServing(
 # Create the online table for house features
 # feature_model_server.create_online_table()
 # logger.info("Created online table")
+if not is_test:
+    feature_model_server.update_online_table(config=config)
+    logger.info("Updated online table")
 
-feature_model_server.update_online_table(config=config)
-logger.info("Updated online table")
-
-# Deploy the model serving endpoint with feature lookup
-feature_model_server.deploy_or_update_serving_endpoint(version=model_version)
-logger.info("Started deployment/update of the serving endpoint")
+    # Deploy the model serving endpoint with feature lookup
+    feature_model_server.deploy_or_update_serving_endpoint(version=model_version)
+    logger.info("Started deployment/update of the serving endpoint")
