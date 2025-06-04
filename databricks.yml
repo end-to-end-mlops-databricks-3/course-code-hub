@@ -24,13 +24,13 @@ variables:
     description: schedule pause status
     default: PAUSED
   is_test:
-    default: False
+    default: 0
   env:
     description: environment
     default: dev
   marvelous_version:
     description: version of Marvelous package
-    default: "0.2.2"
+    default: "0.3.0"
 
 resources:
   jobs:
@@ -126,7 +126,7 @@ resources:
           condition_task:
             op: "EQUAL_TO"
             left: "${var.is_test}"
-            right: "True"
+            right: "1"
           depends_on:
             - task_key: "deploy_model"
         - task_key: "post_commit_status"

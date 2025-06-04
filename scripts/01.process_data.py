@@ -23,7 +23,7 @@ df = spark.read.csv(
     f"/Volumes/{config.catalog_name}/{config.schema_name}/data/data.csv", header=True, inferSchema=True
 ).toPandas()
 
-if not is_test:
+if is_test==0:
     # Generate synthetic data.
     # This is mimicking a new data arrival. In real world, this would be a new batch of data.
     # df is passed to infer schema

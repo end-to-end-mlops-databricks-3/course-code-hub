@@ -57,7 +57,7 @@ logger.info("Model evaluation completed, model improved: ", model_improved)
 is_test = args.is_test
 
 # when running test, always register and deploy
-if is_test:
+if is_test==1:
     model_improved = True
 
 if model_improved:

@@ -43,7 +43,7 @@ feature_model_server.deploy_or_update_serving_endpoint(version=model_version)
 logger.info("Started deployment/update of the serving endpoint.")
 
 # Delete endpoint if test
-if is_test:
+if is_test==1:
     workspace = WorkspaceClient()
     workspace.serving_endpoints.delete(name=endpoint_name)
     logger.info("Deleting serving endpoint.")
