@@ -44,6 +44,7 @@ jobs:
         run: |
           uv run pytest -m "not ci_exclude"
   integration_testing:
+    needs: pytest_and_checks
     runs-on: ubuntu-latest
     environment: dev
     permissions:
