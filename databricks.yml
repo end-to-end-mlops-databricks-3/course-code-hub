@@ -179,7 +179,7 @@ targets:
       root_path: /Shared/.bundle/${bundle.target}/${bundle.name}
     variables:
       schedule_pause_status: PAUSED
-      is_test: True
+      is_test: 1
       env: dev
 
   acc:
@@ -190,7 +190,7 @@ targets:
       root_path: /Shared/.bundle/${bundle.target}/${bundle.name}
     variables:
       schedule_pause_status: PAUSED
-      is_test: True
+      is_test: 1
       env: acc
 
 
@@ -201,5 +201,5 @@ targets:
       root_path: /Shared/.bundle/${bundle.target}/${bundle.name}
     variables:
       schedule_pause_status: PAUSED # normally UNPAUSED
-      is_test: False
+      is_test: 0
       env: prd
