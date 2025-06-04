@@ -1,4 +1,3 @@
-from marvelous.github_app import acquire_access_token
 from marvelous.common import get_dbr_host
 import argparse
 import os
@@ -16,7 +15,7 @@ git_sha = args.git_sha
 job_id = args.job_id
 run_id = args.job_run_id
 
-token = acquire_access_token(private_key=os.environ["PRIVATE_KEY"])
+token = os.environ["TOKEN_STATUS_CHECK"]
 url = f"https://api.github.com/repos/{org}/{repo}/statuses/{git_sha}"
 link_to_databricks_run = f"{host}/jobs/{job_id}/runs/{run_id}"
 

@@ -56,7 +56,7 @@ resources:
               min_workers: 1
               max_workers: 1
             spark_env_vars:
-              "PRIVATE_KEY": "{{secrets/mlops_course/github_app_pk}}"
+              "TOKEN_STATUS_CHECK": "{{secrets/mlops_course/git_token_status_check}}"
 
       tasks:
         - task_key: "preprocessing"
