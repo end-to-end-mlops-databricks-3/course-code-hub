@@ -1,7 +1,7 @@
 name: CD
 
 on:
-  workflow_dispatch:
+  # workflow_dispatch:
 
   push:
     branches:
@@ -49,9 +49,11 @@ jobs:
         env:
           DATABRICKS_BUNDLE_ENV: ${{ matrix.environment }}
         run: |
-            if [ "${{ matrix.environment }}" = "prd" ]; then
-            echo "VERSION=$(cat version.txt)"
-            git tag $VERSION
-            git push origin $VERSION
-            fi
             databricks bundle deploy --var="git_sha=${{ github.sha }}"
+            # can not enable push action for not paid user
+            # if [ "${{ matrix.environment }}" = "prd" ]; then
+            # echo "VERSION=$(cat version.txt)"
+            # git tag $VERSION
+            # git push origin $VERSION
+            # fi
+
