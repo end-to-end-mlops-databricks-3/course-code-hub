@@ -162,7 +162,7 @@ targets:
       root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.target}/${bundle.name}
     variables:
       schedule_pause_status: PAUSED
-      is_test: False
+      is_test: 0
       env: dev
     artifacts:
       default:
