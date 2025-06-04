@@ -30,7 +30,7 @@ dev = ["databricks-connect==15.4.5",
        "pip>=24.2",
        "pre-commit>=4.1.0, <5",
        "pytest>=8.3.4, <9",
-       "marvelous@git+https://github.com/end-to-end-mlops-databricks-3/marvelous@0.1.0",
+       "marvelous@git+https://github.com/end-to-end-mlops-databricks-3/marvelous@0.3.1",
     ]
 
 test = [
@@ -40,7 +40,7 @@ test = [
     "pytest>=8.3.5",
     "pytest-cov >=6.1.0",
     "pydantic-settings>=2.8.1",
-    "marvelous@git+https://github.com/end-to-end-mlops-databricks-3/marvelous@0.1.0",
+    "marvelous@git+https://github.com/end-to-end-mlops-databricks-3/marvelous@0.3.1",
 ]
 
 [build-system]

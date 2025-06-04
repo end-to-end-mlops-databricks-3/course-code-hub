@@ -30,15 +30,18 @@ class FeatureServing:
     def create_online_table(self) -> None:
         """Create an online table based on the feature table."""
         spec = OnlineTableSpec(
-            primary_key_columns=["Id"],
+            primary_key_columns=["Id"],  # Feature lookup key
             source_table_full_name=self.feature_table_name,
-            run_triggered=OnlineTableSpecTriggeredSchedulingPolicy.from_dict({"triggered": "true"}),
-            perform_full_copy=False,
+            run_triggered=OnlineTableSpecTriggeredSchedulingPolicy.from_dict(
+                {"triggered": "true"}
+            ),  # Sets the policy to update the online table when triggered (not on a schedule)
+            perform_full_copy=False,  # Performs incremental updates instead of full snapshot
         )
         self.workspace.online_tables.create(name=self.online_table_name, spec=spec)
 
     def create_feature_spec(self) -> None:
         """Create a feature spec to enable feature serving."""
+        # A configuration for which features to serve.
         features = [
             FeatureLookup(
                 table_name=self.feature_table_name,
