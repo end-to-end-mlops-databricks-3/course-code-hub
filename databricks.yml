@@ -30,7 +30,7 @@ variables:
     default: dev
   marvelous_version:
     description: version of Marvelous package
-    default: "0.3.0"
+    default: "0.3.1"
 
 resources:
   jobs:
