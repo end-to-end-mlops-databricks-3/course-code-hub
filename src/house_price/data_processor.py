@@ -89,11 +89,11 @@ class DataProcessor:
             "update_timestamp_utc", to_utc_timestamp(current_timestamp(), "UTC")
         )
 
-        train_set_with_timestamp.write.mode("overwrite").saveAsTable(
+        train_set_with_timestamp.write.mode("append").saveAsTable(
             f"{self.config.catalog_name}.{self.config.schema_name}.train_set"
         )
 
-        test_set_with_timestamp.write.mode("overwrite").saveAsTable(
+        test_set_with_timestamp.write.mode("append").saveAsTable(
             f"{self.config.catalog_name}.{self.config.schema_name}.test_set"
         )
 
