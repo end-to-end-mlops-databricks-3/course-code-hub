@@ -15,8 +15,8 @@ jobs:
         environment: [acc, prd]
     environment: ${{ matrix.environment }}
     permissions:
-      id-token: write
-      contents: read
+      id-token: write # to fetch openID token
+      contents: write # to push tag
     env:
       DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
     steps:
