@@ -1,9 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
@@ -48,8 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev
     permissions:
-      id-token: write
-      contents: read
+      id-token: write # to fetch OpenID token
     env:
       DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
     steps:
