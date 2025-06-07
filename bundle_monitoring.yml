@@ -23,9 +23,9 @@ resources:
       tasks:
         - task_key: "refresh_monitor_table"
           # job_cluster_key: "house-price-cluster"
-          existing_cluster_id: 0201-062019-g0y4hlmn # 0129-141753-fe8h6si0
+          existing_cluster_id: 0513-112814-kzixtb9s
           spark_python_task:
-            python_file: "scripts/04.refresh_monitor.py"
+            python_file: "scripts/05.refresh_monitor.py"
             parameters:
               - "--root_path"
               - ${workspace.root_path}
