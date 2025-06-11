@@ -3,6 +3,8 @@ bundle:
 
 include:
   - bundle_monitoring.yml
+  - resources/*.yml
+
 
 artifacts:
   default:
