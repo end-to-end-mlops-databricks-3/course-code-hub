@@ -1,0 +1,35 @@
+
+resources:
+  jobs:
+    house-price-monitor-update:
+      name: house-price-monitor-update-workflow
+      schedule:
+        quartz_cron_expression: "0 0 6 ? * MON"
+        timezone_id: "Europe/Amsterdam"
+        pause_status: ${var.schedule_pause_status}
+      tags:
+        project_name: "house-price"
+      job_clusters:
+        - job_cluster_key: "house-price-cluster"
+          new_cluster:
+            spark_version: "15.4.x-scala2.12"
+            data_security_mode: "SINGLE_USER"
+            node_type_id: "r3.xlarge"
+            driver_node_type_id: "r3.xlarge"
+            autoscale:
+              min_workers: 1
+              max_workers: 1
+
+      tasks:
+        - task_key: "refresh_monitor_table"
+          # job_cluster_key: "house-price-cluster"
+          existing_cluster_id: 0513-112814-kzixtb9s
+          spark_python_task:
+            python_file: "scripts/05.refresh_monitor.py"
+            parameters:
+              - "--root_path"
+              - ${workspace.root_path}
+              - "--env"
+              - ${bundle.target}
+          libraries:
+           - whl: ./dist/*.whl
