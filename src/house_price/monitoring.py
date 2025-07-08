@@ -12,6 +12,7 @@ from pyspark.sql import functions as F
 from pyspark.sql.types import ArrayType, DoubleType, IntegerType, StringType, StructField, StructType
 
 from house_price.config import ProjectConfig
+from house_price.models.nannyml_model import HousePriceNannyMLWrapper
 
 
 def create_or_refresh_monitoring(config: ProjectConfig, spark: SparkSession, workspace: WorkspaceClient) -> None:
@@ -147,7 +148,30 @@ def create_or_refresh_monitoring(config: ProjectConfig, spark: SparkSession, wor
 
     df_final_with_features = df_final_with_features.withColumn("GrLivArea", F.col("GrLivArea").cast("double"))
 
-    df_final_with_features.write.format("delta").mode("append").saveAsTable(
+    # Convert to pandas for NannyML
+    df_final_pd = df_final_with_features.toPandas()
+    test_set_pd = test_set.toPandas()
+
+    # Fit and predict with NannyML
+    nannyml_wrapper = HousePriceNannyMLWrapper(config=config, model=None, spark=spark)
+    nannyml_wrapper.train(reference_data=test_set_pd)
+    nannyml_results_df = nannyml_wrapper.predict(df_final_pd)
+    
+    # remove nannymls multi-index from the results dataframe
+    nannyml_results_df = nannyml_results_df[[col for col in nannyml_results_df.columns if col.startswith('chunk') or col.startswith('rmsle')]]
+
+    # Merge NannyML results with monitoring data on timestamp and chunk_start_date
+    merged_df = df_final_pd.merge(
+        nannyml_results_df,
+        left_on="timestamp",
+        right_on="chunk_start_date",
+        how="left",
+        suffixes=("", "_nannyml")
+    )
+
+    # Convert back to Spark DataFrame
+    merged_spark_df = spark.createDataFrame(merged_df)
+    merged_spark_df.write.format("delta").mode("append").saveAsTable(
         f"{config.catalog_name}.{config.schema_name}.model_monitoring"
     )
 
