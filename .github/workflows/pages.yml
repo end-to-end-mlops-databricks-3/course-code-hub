@@ -52,13 +52,7 @@ jobs:
         
       - name: Install dependencies
         run: |
-          gem install jekyll bundler
-          bundle init --force
-          bundle add jekyll
-          bundle add minima
-          bundle add jekyll-feed
-          bundle add jekyll-sitemap
-          bundle add jekyll-seo-tag
+          bundle install
           
       - name: Build with Jekyll
         run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
