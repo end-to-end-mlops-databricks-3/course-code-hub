@@ -46,11 +46,14 @@ jobs:
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v4
+        with:
+          # Enable Pages if not already enabled
+          enablement: true
         
       - name: Install dependencies
         run: |
           gem install jekyll bundler
-          bundle init
+          bundle init --force
           bundle add jekyll
           bundle add minima
           bundle add jekyll-feed
