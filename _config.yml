@@ -1,0 +1,90 @@
+# GitHub Pages Configuration
+title: "Marvelous MLOps Course"
+description: "End-to-End MLOps with Databricks - Course Documentation"
+baseurl: "/course-code-hub3"
+url: "https://end-to-end-mlops-databricks-3.github.io"
+
+# Theme
+theme: minima
+# Alternative themes you can use:
+# theme: jekyll-theme-cayman
+# theme: jekyll-theme-minimal
+# theme: jekyll-theme-architect
+
+# Navigation
+header_pages:
+  - index.md
+  - lectures/lecture-1.md
+  - lectures/lecture-2.md
+  - lectures/lecture-3.md
+  - lectures/lecture-4.md
+  - lectures/lecture-5.md
+  - lectures/lecture-6.md
+
+# Markdown settings
+markdown: kramdown
+highlighter: rouge
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# Exclude files from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+  - .databricks/
+  - .git/
+  - .github/
+  - notebooks/
+  - src/
+  - tests/
+  - scripts/
+  - data/
+  - .venv/
+  - __pycache__/
+  - "*.pyc"
+  - .DS_Store
+
+# Include files
+include:
+  - _pages
+  - lectures
+
+# Collections
+collections:
+  lectures:
+    output: true
+    permalink: /:collection/:name/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+  - scope:
+      path: ""
+      type: "lectures"
+    values:
+      layout: "default"
+
+# Social links (optional)
+github_username: end-to-end-mlops-databricks-3
+
+# Google Analytics (optional)
+# google_analytics: UA-XXXXXXXX-X
+
+# Show excerpts on homepage
+show_excerpts: true
