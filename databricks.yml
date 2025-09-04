@@ -1,6 +1,11 @@
 bundle:
   name: course-code-hub
 
+include:
+  - bundle_monitoring.yml
+  - resources/*.yml
+
+
 artifacts:
   default:
     type: whl
@@ -154,7 +159,7 @@ resources:
 
 targets:
   dev:
-    cluster_id: 0514-140727-24llz5or #replace with your own!
+    cluster_id: 0513-112814-kzixtb9s #replace with your own!
     default: true
     mode: development
     workspace:
